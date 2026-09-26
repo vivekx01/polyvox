@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY polyvox ./polyvox
 
 RUN useradd -m -u 1000 appuser \
-    && mkdir -p /data/audio \
+    && mkdir -p /data/audio /home/appuser/.cache \
     && chown -R appuser:appuser /app /data/audio /home/appuser
 USER appuser
 ENV PYTHONUNBUFFERED=1 HOME=/home/appuser
