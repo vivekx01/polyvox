@@ -44,7 +44,10 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Then open `http://localhost:8000/login` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` (the admin account is
+`web` doesn't publish a host port by default (see the comment in `docker-compose.yaml` — on Coolify, Traefik reaches
+it over the internal network instead). For local testing, publish one yourself, e.g. add `-p 8000:8000` via a
+`docker-compose.override.yml` with a `ports:` entry on `web`, then open `http://localhost:8000/login` and sign in
+with `ADMIN_EMAIL` / `ADMIN_PASSWORD` (the admin account is
 created automatically on first startup). From there:
 
 - **Generate** — any logged-in user can submit text and download the resulting audio.

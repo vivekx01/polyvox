@@ -4,8 +4,13 @@ services:
     image: polyvox:latest
     command: ["uvicorn", "polyvox.main:app", "--host", "0.0.0.0", "--port", "8000"]
     env_file: .env
-    ports:
-      - "8000:8000"
+    # No host port published: Coolify's Traefik proxy reaches this container
+    # over the shared `coolify` network via labels, not a host-bound port —
+    # and host ports 8000/8080/80/443 are already owned by Coolify itself.
+    # For plain `docker compose up` outside Coolify, add your own override,
+    # e.g. `docker compose run --service-ports web` or a local ports mapping.
+    expose:
+      - "8000"
     volumes:
       - audio_data:/data/audio
     healthcheck:
