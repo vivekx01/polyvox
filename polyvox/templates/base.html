@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Polyvox{% endblock %}</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="h-full text-slate-900">
+  {% if current_user %}
+  <header class="bg-white border-b border-slate-200">
+    <nav class="max-w-4xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-14">
+        <a href="/generate" class="font-semibold text-indigo-600">Polyvox</a>
+
+        <div class="hidden sm:flex sm:items-center sm:gap-4">
+          <a href="/generate" class="text-sm text-slate-600 hover:text-slate-900">Generate</a>
+          {% if current_user.is_admin %}
+          <a href="/admin/users" class="text-sm text-slate-600 hover:text-slate-900">Users</a>
+          <a href="/admin/api-keys" class="text-sm text-slate-600 hover:text-slate-900">API Keys</a>
+          {% endif %}
+          <span class="text-sm text-slate-400">{{ current_user.email }}</span>
+          <form method="post" action="/logout">
+            <button class="text-sm text-slate-600 hover:text-slate-900" type="submit">Log out</button>
+          </form>
+        </div>
+
+        <button id="menu-toggle" class="sm:hidden p-2 -mr-2 text-slate-600" aria-label="Toggle menu">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="mobile-menu" class="hidden sm:hidden pb-4 flex flex-col gap-3">
+        <a href="/generate" class="text-sm text-slate-600">Generate</a>
+        {% if current_user.is_admin %}
+        <a href="/admin/users" class="text-sm text-slate-600">Users</a>
+        <a href="/admin/api-keys" class="text-sm text-slate-600">API Keys</a>
+        {% endif %}
+        <span class="text-sm text-slate-400">{{ current_user.email }}</span>
+        <form method="post" action="/logout">
+          <button class="text-sm text-slate-600" type="submit">Log out</button>
+        </form>
+      </div>
+    </nav>
+  </header>
+  <script>
+    document.getElementById("menu-toggle").addEventListener("click", () => {
+      document.getElementById("mobile-menu").classList.toggle("hidden");
+    });
+  </script>
+  {% endif %}
+
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

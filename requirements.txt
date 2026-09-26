@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+pydantic-settings
+sqlalchemy>=2.0
+psycopg[binary]
+redis
+rq
+bcrypt
+itsdangerous
+numpy
+supertonic

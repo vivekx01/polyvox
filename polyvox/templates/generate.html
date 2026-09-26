@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Generate · Polyvox{% endblock %}
+{% block content %}
+
+<h1 class="text-xl font-semibold mb-6">Generate audio</h1>
+
+<form id="generate-form" class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-4">
+  <div>
+    <label class="block text-sm font-medium text-slate-700 mb-1" for="text">Text</label>
+    <textarea id="text" name="text" rows="6" required maxlength="20000"
+      class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      placeholder="Type or paste the text to narrate..."></textarea>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1" for="lang">Language</label>
+      <select id="lang" name="lang" class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm">
+        {% for l in languages %}
+        <option value="{{ l.code }}" {% if l.code == 'en' %}selected{% endif %}>{{ l.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1" for="voice">Voice</label>
+      <select id="voice" name="voice" class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm">
+        {% for v in voices %}
+        <option value="{{ v.id }}" {% if v.id == 'M1' %}selected{% endif %}>{{ v.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1" for="speed">Speed</label>
+      <input type="number" id="speed" name="speed" value="1.0" min="0.7" max="2.0" step="0.05"
+        class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1" for="steps">Steps</label>
+      <input type="number" id="steps" name="steps" value="8" min="1" max="32" step="1"
+        class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm" />
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <button type="submit" id="submit-btn"
+      class="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+      Generate
+    </button>
+    <span id="form-message" class="text-sm text-slate-500"></span>
+  </div>
+</form>
+
+<h2 class="text-lg font-semibold mt-10 mb-3">Recent jobs</h2>
+<div class="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-slate-500 border-b border-slate-200">
+        <th class="px-4 py-2 font-medium">Text</th>
+        <th class="px-4 py-2 font-medium">Lang</th>
+        <th class="px-4 py-2 font-medium">Status</th>
+        <th class="px-4 py-2 font-medium">Audio</th>
+      </tr>
+    </thead>
+    <tbody id="job-rows">
+      {% for job in recent_jobs %}
+      <tr data-job-id="{{ job.id }}" class="border-b border-slate-100 last:border-0">
+        <td class="px-4 py-2 max-w-xs truncate">{{ job.text_preview }}</td>
+        <td class="px-4 py-2">{{ job.lang }}</td>
+        <td class="px-4 py-2 job-status">{{ job.status.value }}</td>
+        <td class="px-4 py-2 job-audio">
+          {% if job.status.value == 'finished' and job.audio_expired_at is none and job.audio_filename %}
+          <a class="text-indigo-600 hover:underline" href="/audio/{{ job.audio_filename }}" target="_blank">Download</a>
+          {% elif job.status.value == 'failed' %}
+          <span class="text-red-600">{{ job.error_message or 'failed' }}</span>
+          {% else %}
+          &mdash;
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not recent_jobs %}
+  <p class="px-4 py-6 text-sm text-slate-400">No jobs yet.</p>
+  {% endif %}
+</div>
+
+<script src="/static/app.js"></script>
+{% endblock %}
