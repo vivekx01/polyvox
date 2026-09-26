@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from polyvox.auth.dependencies import Principal
 from polyvox.db.models import Job, JobSource, JobStatus
 from polyvox.queue.rq_setup import enqueue_job, redis_conn
+from polyvox.storage.paths import audio_path
 
 PREVIEW_LEN = 200
 
@@ -82,3 +84,19 @@ def sync_job_from_rq(db: Session, job: Job) -> Job:
 
 def get_job(db: Session, job_id: uuid.UUID) -> Job | None:
     return db.get(Job, job_id)
+
+
+def delete_job(db: Session, job: Job) -> None:
+    """Removes the audio file (if any), the RQ record, and the history row."""
+    try:
+        os.remove(audio_path(str(job.id)))
+    except FileNotFoundError:
+        pass
+
+    try:
+        RQJob.fetch(str(job.id), connection=redis_conn).delete()
+    except NoSuchJobError:
+        pass
+
+    db.delete(job)
+    db.commit()

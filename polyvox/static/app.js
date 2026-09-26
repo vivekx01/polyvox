@@ -27,6 +27,9 @@
         <td class="px-4 py-2"></td>
         <td class="px-4 py-2 job-status"></td>
         <td class="px-4 py-2 job-audio"></td>
+        <td class="px-4 py-2 text-right">
+          <button type="button" class="delete-job-btn text-red-600 hover:underline text-sm">Delete</button>
+        </td>
       `;
       rows.prepend(row);
       row.children[0].textContent = textPreview;
@@ -62,6 +65,27 @@
       const textPreview = row.children[0].textContent;
       const lang = row.children[1].textContent;
       pollJob(row.dataset.jobId, textPreview, lang);
+    }
+  });
+
+  rows.addEventListener("click", async (event) => {
+    if (!event.target.classList.contains("delete-job-btn")) return;
+    const row = event.target.closest("tr[data-job-id]");
+    if (!row) return;
+
+    event.target.disabled = true;
+    try {
+      const res = await fetch(`/api/v1/jobs/${row.dataset.jobId}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (res.ok || res.status === 404) {
+        row.remove();
+      } else {
+        event.target.disabled = false;
+      }
+    } catch (err) {
+      event.target.disabled = false;
     }
   });
 

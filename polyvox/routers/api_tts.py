@@ -7,7 +7,7 @@ from polyvox.auth.dependencies import Principal, get_current_principal, require_
 from polyvox.db.base import get_db
 from polyvox.db.models import Job, JobStatus
 from polyvox.schemas.tts import JobCreateRequest, JobCreateResponse, JobStatusResponse, LanguageOut, VoiceOut
-from polyvox.services.jobs import create_job, get_job, sync_job_from_rq
+from polyvox.services.jobs import create_job, delete_job, get_job, sync_job_from_rq
 from polyvox.tts.languages import LANGUAGES, VOICES
 
 router = APIRouter(prefix="/api/v1")
@@ -72,6 +72,19 @@ def get_job_status(
     require_job_access(job, principal)
     job = sync_job_from_rq(db, job)
     return _to_status_response(job)
+
+
+@router.delete("/jobs/{job_id}", status_code=204)
+def delete_job_endpoint(
+    job_id: uuid.UUID,
+    principal: Principal = Depends(get_current_principal),
+    db: Session = Depends(get_db),
+):
+    job = get_job(db, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    require_job_access(job, principal)
+    delete_job(db, job)
 
 
 @router.get("/jobs", response_model=list[JobStatusResponse])
