@@ -34,4 +34,7 @@ def get_audio(
     if not os.path.isfile(path):
         raise HTTPException(status_code=410, detail="Audio has expired")
 
-    return FileResponse(path, media_type="audio/wav", filename=filename)
+    # Inline disposition so it streams straight into an <audio> player;
+    # the UI's Download link adds its own `download` attribute when a
+    # forced save is actually wanted.
+    return FileResponse(path, media_type="audio/wav", filename=filename, content_disposition_type="inline")

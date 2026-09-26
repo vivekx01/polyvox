@@ -2,90 +2,92 @@
 {% block title %}Generate · Polyvox{% endblock %}
 {% block content %}
 
-<h1 class="text-xl font-semibold mb-6">Generate audio</h1>
+<h1 class="text-2xl font-bold mb-6 tracking-tight">Generate audio</h1>
 
-<form id="generate-form" class="bg-white border border-slate-200 rounded-lg p-4 sm:p-6 space-y-4">
+<form id="generate-form" class="card p-4 sm:p-6 space-y-4">
   <div>
-    <label class="block text-sm font-medium text-slate-700 mb-1" for="text">Text</label>
+    <label class="block text-sm font-medium text-slate-700 mb-1.5" for="text">Text</label>
     <textarea id="text" name="text" rows="6" required maxlength="20000"
-      class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      class="field resize-y"
       placeholder="Type or paste the text to narrate..."></textarea>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
     <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1" for="lang">Language</label>
-      <select id="lang" name="lang" class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm">
+      <label class="block text-sm font-medium text-slate-700 mb-1.5" for="lang">Language</label>
+      <select id="lang" name="lang" class="field">
         {% for l in languages %}
         <option value="{{ l.code }}" {% if l.code == 'en' %}selected{% endif %}>{{ l.name }}</option>
         {% endfor %}
       </select>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1" for="voice">Voice</label>
-      <select id="voice" name="voice" class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm">
+      <label class="block text-sm font-medium text-slate-700 mb-1.5" for="voice">Voice</label>
+      <select id="voice" name="voice" class="field">
         {% for v in voices %}
         <option value="{{ v.id }}" {% if v.id == 'M1' %}selected{% endif %}>{{ v.label }}</option>
         {% endfor %}
       </select>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1" for="speed">Speed</label>
-      <input type="number" id="speed" name="speed" value="1.0" min="0.7" max="2.0" step="0.05"
-        class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm" />
+      <label class="block text-sm font-medium text-slate-700 mb-1.5" for="speed">Speed</label>
+      <input type="number" id="speed" name="speed" value="1.0" min="0.7" max="2.0" step="0.05" class="field" />
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1" for="steps">Steps</label>
-      <input type="number" id="steps" name="steps" value="8" min="1" max="32" step="1"
-        class="w-full border border-slate-300 rounded-md px-2 py-2 text-sm" />
+      <label class="block text-sm font-medium text-slate-700 mb-1.5" for="steps">Steps</label>
+      <input type="number" id="steps" name="steps" value="8" min="1" max="32" step="1" class="field" />
     </div>
   </div>
 
-  <div class="flex items-center gap-3">
-    <button type="submit" id="submit-btn"
-      class="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+  <div class="flex items-center gap-3 pt-1">
+    <button type="submit" id="submit-btn" class="btn btn-primary">
       Generate
     </button>
     <span id="form-message" class="text-sm text-slate-500"></span>
   </div>
 </form>
 
-<h2 class="text-lg font-semibold mt-10 mb-3">Recent jobs</h2>
-<div class="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+<h2 class="text-lg font-semibold mt-10 mb-3 tracking-tight">Recent jobs</h2>
+<div class="card overflow-x-auto">
   <table class="w-full text-sm">
     <thead>
       <tr class="text-left text-slate-500 border-b border-slate-200">
-        <th class="px-4 py-2 font-medium">Text</th>
-        <th class="px-4 py-2 font-medium">Lang</th>
-        <th class="px-4 py-2 font-medium">Status</th>
-        <th class="px-4 py-2 font-medium">Audio</th>
-        <th class="px-4 py-2 font-medium"></th>
+        <th class="px-4 py-3 font-medium">Text</th>
+        <th class="px-4 py-3 font-medium">Lang</th>
+        <th class="px-4 py-3 font-medium">Status</th>
+        <th class="px-4 py-3 font-medium">Audio</th>
+        <th class="px-4 py-3 font-medium"></th>
       </tr>
     </thead>
     <tbody id="job-rows">
       {% for job in recent_jobs %}
       <tr data-job-id="{{ job.id }}" class="border-b border-slate-100 last:border-0">
-        <td class="px-4 py-2 max-w-xs truncate">{{ job.text_preview }}</td>
-        <td class="px-4 py-2">{{ job.lang }}</td>
-        <td class="px-4 py-2 job-status">{{ job.status.value }}</td>
-        <td class="px-4 py-2 job-audio">
+        <td class="px-4 py-3 max-w-xs truncate">{{ job.text_preview }}</td>
+        <td class="px-4 py-3 text-slate-500">{{ job.lang }}</td>
+        <td class="px-4 py-3 job-status">
+          <span class="badge badge-{{ job.status.value }}"><span class="badge-dot"></span>{{ job.status.value }}</span>
+        </td>
+        <td class="px-4 py-3 job-audio">
           {% if job.status.value == 'finished' and job.audio_expired_at is none and job.audio_filename %}
-          <a class="text-indigo-600 hover:underline" href="/audio/{{ job.audio_filename }}" target="_blank">Download</a>
+          <div class="flex items-center gap-2">
+            <audio controls preload="none" class="h-8 max-w-[170px] sm:max-w-[220px]" src="/audio/{{ job.audio_filename }}"></audio>
+            <a class="text-indigo-600 hover:underline text-xs font-medium shrink-0" href="/audio/{{ job.audio_filename }}" download>Download</a>
+          </div>
           {% elif job.status.value == 'failed' %}
-          <span class="text-red-600">{{ job.error_message or 'failed' }}</span>
+          <span class="text-red-600 text-xs">{{ job.error_message or 'failed' }}</span>
           {% else %}
-          &mdash;
+          <span class="text-slate-300">&mdash;</span>
           {% endif %}
         </td>
-        <td class="px-4 py-2 text-right">
-          <button type="button" class="delete-job-btn text-red-600 hover:underline text-sm">Delete</button>
+        <td class="px-4 py-3 text-right">
+          <button type="button" class="delete-job-btn btn-danger-text">Delete</button>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% if not recent_jobs %}
-  <p class="px-4 py-6 text-sm text-slate-400">No jobs yet.</p>
+  <p class="px-4 py-10 text-sm text-slate-400 text-center">No jobs yet &mdash; generate your first one above.</p>
   {% endif %}
 </div>
 

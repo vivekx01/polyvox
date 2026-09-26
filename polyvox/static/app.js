@@ -5,15 +5,25 @@
   const submitBtn = document.getElementById("submit-btn");
   const message = document.getElementById("form-message");
   const rows = document.getElementById("job-rows");
+  const SPINNER = '<span class="spinner spinner-dark"></span>';
 
-  function statusCell(job) {
+  function statusBadge(status) {
+    return `<span class="badge badge-${status}"><span class="badge-dot"></span>${status}</span>`;
+  }
+
+  function audioCell(job) {
     if (job.status === "finished" && job.audio_url) {
-      return `<a class="text-indigo-600 hover:underline" href="${job.audio_url}" target="_blank">Download</a>`;
+      return `
+        <div class="flex items-center gap-2">
+          <audio controls preload="none" class="h-8 max-w-[170px] sm:max-w-[220px]" src="${job.audio_url}"></audio>
+          <a class="text-indigo-600 hover:underline text-xs font-medium shrink-0" href="${job.audio_url}" download>Download</a>
+        </div>
+      `;
     }
     if (job.status === "failed") {
-      return `<span class="text-red-600">${job.error || "failed"}</span>`;
+      return `<span class="text-red-600 text-xs">${job.error || "failed"}</span>`;
     }
-    return "&mdash;";
+    return '<span class="text-slate-300">&mdash;</span>';
   }
 
   function upsertRow(job, textPreview, lang) {
@@ -23,20 +33,20 @@
       row.dataset.jobId = job.job_id;
       row.className = "border-b border-slate-100 last:border-0";
       row.innerHTML = `
-        <td class="px-4 py-2 max-w-xs truncate"></td>
-        <td class="px-4 py-2"></td>
-        <td class="px-4 py-2 job-status"></td>
-        <td class="px-4 py-2 job-audio"></td>
-        <td class="px-4 py-2 text-right">
-          <button type="button" class="delete-job-btn text-red-600 hover:underline text-sm">Delete</button>
+        <td class="px-4 py-3 max-w-xs truncate"></td>
+        <td class="px-4 py-3 text-slate-500"></td>
+        <td class="px-4 py-3 job-status"></td>
+        <td class="px-4 py-3 job-audio"></td>
+        <td class="px-4 py-3 text-right">
+          <button type="button" class="delete-job-btn btn-danger-text">Delete</button>
         </td>
       `;
       rows.prepend(row);
       row.children[0].textContent = textPreview;
       row.children[1].textContent = lang;
     }
-    row.querySelector(".job-status").textContent = job.status;
-    row.querySelector(".job-audio").innerHTML = statusCell(job);
+    row.querySelector(".job-status").innerHTML = statusBadge(job.status);
+    row.querySelector(".job-audio").innerHTML = audioCell(job);
   }
 
   function pollJob(jobId, textPreview, lang) {
@@ -73,7 +83,10 @@
     const row = event.target.closest("tr[data-job-id]");
     if (!row) return;
 
-    event.target.disabled = true;
+    const btn = event.target;
+    btn.disabled = true;
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = SPINNER;
     try {
       const res = await fetch(`/api/v1/jobs/${row.dataset.jobId}`, {
         method: "DELETE",
@@ -82,17 +95,21 @@
       if (res.ok || res.status === 404) {
         row.remove();
       } else {
-        event.target.disabled = false;
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
       }
     } catch (err) {
-      event.target.disabled = false;
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
     }
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    const originalBtnHtml = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    message.textContent = "Submitting...";
+    submitBtn.innerHTML = `${SPINNER.replace("spinner-dark", "")} Generating…`;
+    message.textContent = "";
 
     const text = document.getElementById("text").value;
     const lang = document.getElementById("lang").value;
@@ -131,6 +148,7 @@
       message.textContent = "Request failed.";
     } finally {
       submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
     }
   });
 })();
