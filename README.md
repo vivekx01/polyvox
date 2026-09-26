@@ -28,12 +28,18 @@ External app (X-API-Key) ──┼──▶ web (FastAPI: UI + JSON API — neve
 Scaling out is done by running more `worker` container replicas (each loads its own model instance); the `web`
 tier does no CPU-heavy work and stays a single process by default.
 
+Postgres and Redis are **not** part of this compose file — `web`/`worker` connect out to existing instances via
+`DATABASE_URL`/`REDIS_URL` (see Configuration below). This was originally a self-contained stack with its own
+`postgres`/`redis` services; it now expects to reuse shared instances (e.g. Coolify's shared-postgres/shared-redis
+resources) instead, joining their Docker network directly.
+
 ## Running locally (Docker required)
 
 ```bash
 cp .env.example .env
-# edit .env: set SECRET_KEY, ADMIN_EMAIL/ADMIN_PASSWORD, POSTGRES_PASSWORD, and set
-# ENV=development if you're testing over plain HTTP (session cookies default to HTTPS-only)
+# edit .env: set SECRET_KEY, ADMIN_EMAIL/ADMIN_PASSWORD, and DATABASE_URL/REDIS_URL to point at
+# reachable Postgres/Redis instances. Set ENV=development if testing over plain HTTP (session
+# cookies default to HTTPS-only).
 
 docker compose up --build
 ```
@@ -91,13 +97,17 @@ See `.env.example` for the full list. Notable ones:
 
 ## Deploying on Coolify
 
-1. Push this repo to GitHub (already done for the initial version) and point a new Coolify "Docker Compose"
-   resource at it.
-2. Set the environment variables from `.env.example` in Coolify's UI (in particular `SECRET_KEY`,
-   `ADMIN_EMAIL`/`ADMIN_PASSWORD`, and the Postgres credentials) — Coolify injects these into the compose stack.
-3. Only the `web` service publishes a port (`8000`); point Coolify's domain/HTTPS proxy at it. Leave `ENV=production`
+1. Point a Coolify "Docker Compose" application at this repo (branch `master`, compose file
+   `docker-compose.yaml`).
+2. Set the environment variables from `.env.example` in Coolify's UI — in particular `SECRET_KEY`,
+   `ADMIN_EMAIL`/`ADMIN_PASSWORD`, and `DATABASE_URL`/`REDIS_URL` pointed at your actual shared Postgres/Redis
+   instances. Use the **container name** (or resource UUID) as the hostname, not a human-readable display name —
+   `docker inspect <container>` is the reliable way to confirm it resolves on the shared Docker network.
+3. Create a dedicated database for Polyvox on the shared Postgres first (`CREATE DATABASE polyvox;`) rather than
+   reusing another app's database.
+4. Only the `web` service publishes a port (`8000`); point Coolify's domain/HTTPS proxy at it. Leave `ENV=production`
    so session cookies are marked `Secure` (requires HTTPS, which Coolify's proxy provides).
-4. `worker` can be scaled to multiple replicas from Coolify once you need more synthesis throughput; it has its
+5. `worker` can be scaled to multiple replicas from Coolify once you need more synthesis throughput; it has its
    own model-cache volume so replicas don't re-download weights on restart.
 
 ## Notes

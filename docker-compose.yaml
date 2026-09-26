@@ -8,11 +8,6 @@ services:
       - "8000:8000"
     volumes:
       - audio_data:/data/audio
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -20,7 +15,7 @@ services:
       retries: 3
       start_period: 10s
     restart: unless-stopped
-    networks: [polyvox_net]
+    networks: [coolify]
 
   worker:
     build: .
@@ -30,47 +25,15 @@ services:
     volumes:
       - audio_data:/data/audio
       - model_cache:/home/appuser/.cache
-    depends_on:
-      redis:
-        condition: service_healthy
     restart: unless-stopped
-    networks: [polyvox_net]
-
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-    networks: [polyvox_net]
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-    networks: [polyvox_net]
+    networks: [coolify]
 
 volumes:
   audio_data:
-  pg_data:
-  redis_data:
   model_cache:
 
 networks:
-  polyvox_net:
-    driver: bridge
+  # Shared Postgres/Redis (see .env.example: DATABASE_URL/REDIS_URL) live on this
+  # pre-existing Coolify-managed network, not in this compose file.
+  coolify:
+    external: true
